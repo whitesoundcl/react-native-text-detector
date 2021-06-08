@@ -2,7 +2,10 @@
 package com.fetchsky.RNTextDetector;
 
 import android.graphics.Rect;
-import android.support.annotation.NonNull;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import androidx.annotation.NonNull;
+import android.util.Base64;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -60,6 +63,36 @@ public class RNTextDetectorModule extends ReactContextBaseJavaModule {
                                     });;
         } catch (IOException e) {
             promise.reject(e);
+            e.printStackTrace();
+        }
+    }
+
+    @ReactMethod
+    public void detectFromBase64(String base64,final Promise promise) {
+        try {
+            // Transform to bitmap
+            byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length); 
+            image = FirebaseVisionImage.fromBitmap(bitmap);
+            Task<FirebaseVisionText> result =
+                    detector.processImage(image)
+                            .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+                                @Override
+                                public void onSuccess(FirebaseVisionText firebaseVisionText) {
+                                    promise.resolve(getDataAsArray(firebaseVisionText));
+                                }
+                            })
+                            .addOnFailureListener(
+                                    new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            e.printStackTrace();
+                                            promise.reject(e);
+                                        }
+                                    });;
+        } catch (Exception e) {
+            promise.reject(e);
+            //System.out.println("error");
             e.printStackTrace();
         }
     }
